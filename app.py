@@ -1,3 +1,5 @@
+"""Minimal Flask app exposing JSON endpoints."""
+
 from flask import Flask, jsonify
 
 app = Flask(__name__)
