@@ -23,21 +23,27 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Lint Python (flake8)
-        run: |
-          pip install flake8
-          flake8 app.py --max-line-length=100
+      - name: Install flake8
+        run: pip install flake8
 
-      - name: Lint Bash (shellcheck)
+      - name: Lint Python
+        run: flake8 app.py --max-line-length=100
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Lint Bash
         run: shellcheck system_health.sh
 
-      - name: Lint Dockerfile (hadolint)
+      - name: Lint Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
 
   build-and-push:
-    name: Build, Test & Push Image
+    name: Build Test Push
     runs-on: ubuntu-latest
     needs: lint
 
@@ -70,7 +76,7 @@ jobs:
           load: true
           tags: ${{ env.IMAGE_NAME }}:test
 
-      - name: Smoke Test Container
+      - name: Smoke Test
         run: |
           docker run -d --name smoke -p 8080:8080 "$IMAGE_NAME:test"
 
@@ -132,3 +138,26 @@ jobs:
 
           git commit -m "chore: bump version to v${{ needs.build-and-push.outputs.version }}"
           git push
+
+  deploy:
+    name: Deploy to VPS (Optional)
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+
+    steps:
+      - uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            docker pull ponkoog/devops-task:latest
+
+            docker rm -f devops-task || true
+
+            docker run -d \
+              --name devops-task \
+              --restart unless-stopped \
+              -p 80:8080 \
+              ponkoog/devops-task:latest
