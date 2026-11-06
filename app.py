@@ -1,4 +1,3 @@
-"""Minimal Flask app exposing a single JSON endpoint."""
 from flask import Flask, jsonify
 
 app = Flask(__name__)
@@ -6,7 +5,15 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return jsonify(message="Hello from DevOps Intern Task!", status="running")
+    return jsonify(
+        message="Hello from DevOps Intern Task!",
+        status="running",
+    )
+
+
+@app.route("/health")
+def health():
+    return jsonify(status="healthy")
 
 
 if __name__ == "__main__":
