@@ -1,4 +1,4 @@
-# DevOps Intern Task
+# DevOps  Task
 
 A minimal Flask app, containerized with Docker, built and published by GitHub Actions, plus a Bash health-check script.
 
